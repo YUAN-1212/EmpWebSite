@@ -25,6 +25,20 @@ namespace WebSite
             bundles.Add(new StyleBundle("~/Content/css").Include(
                       "~/Content/bootstrap.css",
                       "~/Content/site.css"));
+
+            // jqGrid start
+            //bundles.Add(new ScriptBundle("~/bundles/jqGrid").Include(
+            //            "~/Scripts/jquery.jqGrid.js"
+            //            //"~/Scripts/i18n/grid.locale-tw.js"
+            //            ));
+
+            //bundles.Add(new StyleBundle("~/Content/jqGrid").Include(
+            //           "~/Content/jquery.jqGrid/ui.jqgrid.css",
+            //           "~/Content/themes/base/jquery-ui.css"
+            //           ));
+            // jqGrid end
+
+
         }
     }
 }
