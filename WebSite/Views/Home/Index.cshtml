@@ -1,33 +1,344 @@
-﻿
-@*<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>*@
+﻿@*<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>*@
 
 <link href="../../Content/Kendo/default-ocean-blue.css" rel="stylesheet" />
 <script src="../../Scripts/Kendo/jszip.min.js"></script>
 <script src="../../Scripts/Kendo/kendo.all.min.js"></script>
 
-@{
-    ViewBag.Title = "DepList";
-}
+@{ ViewBag.Title = "DepList"; }
 
 @using (Html.BeginForm(null, null, FormMethod.Post, new { @id = "formQuery", autocomplete = "off" }))
 {
-    <h2>test</h2>
+<div class="container body-content">
+    <h2>人員 CRUD+驗證</h2>
 
-    <a class="btn btn-primary" id="btnQuery">
-        新增
-    </a>
+    <div style="padding: 10px;" class="btn-group">
+        部門選擇
+        <input id="kd-place-chooser" />
+    </div>
+    <div style="padding: 10px;">
+        關鍵字:
+        <input id="tKeyword" />
+        <input type="button" value="查詢" id="bQuery" class="btn btn-success" />
+    </div>
 
-    <!-- Kendo版本 grid start -->
     <div id="dvGrid">
     </div>
-    <!-- Kendo版本 grid end -->
+
+    <!-- 新增/修改 視窗 start -->
+    <div id="edit-confirm">
+        <div>
+            <div class="modal-body">
+                <table>
+                    <tbody>
+                        <tr>
+                            <td width="20%">
+                                <label>部門</label>
+                            </td>
+                            <td>
+                                <select id="kd-ddlDepCode" name="kd-ddlDepCode" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="20%">
+                                <label>到職日</label>
+                            </td>
+                            <td>
+                                <input type="text" id="ArrivalDate" name="ArrivalDate" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="20%">
+                                <label>姓名</label>
+                            </td>
+                            <td>
+                                <input type="text" id="Name" placeholder="your name" name="Name" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="20%">
+                                <label>帳號</label>
+                            </td>
+                            <td>
+                                <input type="text" id="Account" placeholder="your name" name="Account" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="20%">
+                                <label>職稱</label>
+                            </td>
+                            <td>
+                                <input type="text" id="Title" placeholder="your Title" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="20%">
+                                <label>戶籍縣市</label>
+                            </td>
+                            <td>
+                                <input id="kd-ddlCity" name="kd-ddlCity" />
+                            </td>
+                            <td>
+                                <input id="kd-ddlArea" name="kd-ddlArea" style="width: 300px" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="20%">
+                                <label>通勤方式</label>
+                            </td>
+                            <td>
+                                <span>
+                                    機車 <input type="checkbox" id="checkbox1" name="Commuting" value="1" />
+                                    汽車 <input type="checkbox" id="checkbox2" name="Commuting" value="2" />
+                                    步行 <input type="checkbox" id="checkbox3" name="Commuting" value="3" />
+                                    大眾運輸 <input type="checkbox" id="checkbox4" name="Commuting" value="4" />
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="20%">
+                                <label>狀態</label>
+                            </td>
+                            <td>
+                                <span>
+                                    在職 <input type="radio" id="Status1" value="1" name="Status" />
+                                    離職 <input type="radio" id="Status2" value="0" name="Status" />
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="20%">
+                                <label>信箱</label>
+                            </td>
+                            <td>
+                                <input id="Mail" name="Mail" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="onOK" class="btn btn-primary">確定</button>
+            <button id="onCancel" class="btn btn-default">取消</button>
+        </div>
+    </div>
+    <!-- 新增/修改 視窗 end -->
+</div>
 }
 
 <script type="text/javascript">
     var grid = $("#dvGrid").data("kendoGrid");
 
+    // 當發生錯誤時，popup的視窗不要關閉(false=不關視窗; true=關掉視窗)
+    var preventCloseOnSave = false;
+
+    // Kendo UI Window & 按鈕的標題
+    var TitleBtn = '';//新增 | 修改
+
     $(document).ready(function () {
         var formName = "#formQuery";
+
+        // 初始化 Kendo Validator 驗證
+        var validator = $("#edit-confirm").kendoValidator({
+            rules: {
+                // 部門必填
+                customRule1: function (input) {
+                    if (input.is("[name=kd-ddlDepCode]")) {
+                        return input.val() !== null;
+                    }
+                    return true;// true 通過驗證
+                },
+                // 到職日必填
+                customRule2: function (input) {
+                    if (input.is("[name=ArrivalDate]")) {
+                        return input.val() !== "";
+                    }
+                    return true;// true 通過驗證
+                },
+                // 到職日，若 [狀態] 選擇 [離職]，則本欄位的值不應大於今日
+                customRule3: function (input) {
+                    var Status = $('[name="Status"]:checked').val();
+
+                    if (input.is("[name=ArrivalDate]") && +Status == 0) {
+                        // 今日
+                        let today = new Date();
+                        today = today.getTime();
+
+                        // 到職日
+                        let Arrival = $('#ArrivalDate').val();
+                        Arrival = new Date(Arrival);
+                        Arrival = Arrival.getTime();
+                        var aa = +Arrival < +today;
+                        return +Arrival < +today;
+                    }
+                    return true;
+                },
+                // 姓名必填
+                customRule4: function (input) {
+                    if (input.is("[name=Name]")) {
+                        return input.val() !== "";
+                    }
+                    return true;// true 通過驗證
+                },
+                // 帳號必填
+                customRule5: function (input) {
+                    if (input.is("[name=Account]")) {
+                        return input.val() !== "";
+                    }
+                    return true;// true 通過驗證
+                },
+                // 戶籍縣必填
+                customRule6: function (input) {
+                    if (input.is("[name=kd-ddlCity]")) {
+                        return input.val() !== "";
+                    }
+                    return true;// true 通過驗證
+                },
+                // 戶籍市必填
+                customRule7: function (input) {
+                    var city = $('#kd-ddlCity').val();
+                    if (!!city && input.is("[name=kd-ddlArea]")) {
+                        return input.val() !== "";
+                    }
+                    return true;// true 通過驗證
+                },
+                // 信箱必填
+                customRule8: function (input) {
+                    if (input.is("[name=Mail]")) {
+                        return input.val() !== "";
+                    }
+                    return true;// true 通過驗證
+                },
+                // 信箱格式錯誤
+                customRule9: function (input) {
+                    if (input.is("[name=Mail]")) {
+                        var val = input.val();
+                        if (val !== '') {
+                            return IsEmail(val);
+                        }
+                    }
+                    return true;// true 通過驗證
+                },
+            },
+            messages: {
+                customRule1: "部門必填",
+                customRule2: "到職日必填",
+                customRule3: "若 [狀態] 選擇 [離職]，則到職日不應大於今日",
+                customRule4: "姓名必填",
+                customRule5: "帳號必填",
+                customRule6: "戶籍縣必填",
+                customRule7: "戶籍市必填",
+                customRule8: "信箱必填",
+                customRule9: "信箱格式錯誤",
+            },
+        }).data("kendoValidator");
+
+        // 部門下拉式-資料來源
+        var ddlDepSource = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    url: "/Home/GetDeptList",
+                    dataType: "json",
+                    error: function (result) {
+                        alert(result);
+                    }
+                }
+            },
+            sort: { field: "Name", dir: "asc" }
+        });
+
+        // 部門下拉式-資料來源
+        var ddlDepSource2 = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    url: "/Home/GetDeptList",
+                    dataType: "json",
+                    error: function (result) {
+                        alert(result);
+                    }
+                }
+            },
+            sort: { field: "Name", dir: "asc" }
+        });
+
+        $("#kd-ddlDepCode").kendoDropDownList({
+            filter: "contains",
+            //optionLabel: '全部',
+            dataTextField: "Name",
+            dataValueField: "Code",
+            dataSource: ddlDepSource
+        }).data("kendoDropDownList");
+
+        // 戶籍縣選單-資料來源
+        var ddlCitySource = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    url: "/Home/GetCitySelectItems",
+                    dataType: "json"
+                }
+            },
+        });
+
+        $('#kd-ddlCity')
+            .kendoDropDownList({
+                autoBind: false,
+                dataTextField: "City",
+                dataValueField: "City",
+                dataSource: ddlCitySource,
+                valuePrimitive: true, // if valuePrimitive isn't true, the status value ends up getting replaced by the whole object - we want to bind just the ID
+                change: function (e) {
+                    // 在主選單選擇更改時，觸發子選單的數據讀取
+                    var childDropDown = $("#kd-ddlArea").data("kendoDropDownList");
+                    childDropDown.dataSource.data([]); // clears dataSource.
+                    childDropDown.dataSource.read();
+                }
+            });
+
+        // 戶籍市選單-資料來源
+        var ddlAreaSource = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    url: "/Home/GetAreaSelectItems",
+                    dataType: "json",
+                    data: function () {
+                        var city = $("#kd-ddlCity").data("kendoDropDownList").value();
+                        var model = {
+                            city: city,
+                        };
+                        return model;
+                    },
+                    complete: function (data) {
+                        // 呼叫服務成功後，要做什麼事
+                        $("#kd-ddlArea").data("kendoDropDownList").enable(true);//解除鎖定戶籍市的下拉選單
+
+                    },
+                    error: function (result) {
+                        alert(result);
+                    }
+                }
+            }
+        });
+
+        $('#kd-ddlArea')
+            .kendoDropDownList({
+                autoBind: false,
+                cascadeFrom: "city", // 設定關聯到主選單
+                dataSource: ddlAreaSource,
+                dataTextField: "Area",
+                dataValueField: "Area"
+            });
+
+        // 初始化頁面上的部門下拉式選單，綁上 ddlDepSource
+        initDDL();
+
+        // 简单的配置
+        $("#ArrivalDate").kendoDatePicker({
+            culture: "zh-TW", //设置特定区域性的信息，默认使用"en-US"，如果进行汉化，引入汉化包后，设置为"zh-CN"
+            format: "yyyy-MM-dd", //设定显示在input标签的日期格式
+            max: new Date(2099, 11, 31), //设定最大日期，默认new Date(2099, 11, 31)
+            min: new Date(1900, 1, 1), //设定最小日期，默认new Date(1900, 0, 1)
+            weekNumber: true, //设定是否在日历左侧显示周数
+        });
 
         var grid = $("#dvGrid").data("kendoGrid");
 
@@ -42,32 +353,39 @@
                     error: function (result) {
                         alert(result);
                     }
-                }, 
-                //parameterMap: function (options, operation) { //自定義請求參數，可自定義添加操作條件
-                    //if (type !== "read" && options.models) {//DML操作
-                    //    var datas = Hap.prepareSubmitParameter(options, type)
-                    //    return kendo.stringify(datas);
-                    //} else if (type === "read") {//查詢
-                    //    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
-                    //}
-                //}
+                },
+                parameterMap: function (options, operation) { //自定義請求參數，可自定義添加操作條件
+                    if (operation == "update" || operation == "create") {
+                        var data = getUpData();
+                        return data;
+                    } else if (operation === 'read') {
+                        var name = $('#tKeyword').val();
+                        var dept = $("#kd-place-chooser").val();
+
+                        var model = {
+                            name: name,
+                            dept: dept,
+                            page: options.page,
+                            take: options.take,
+                            orderby: (options.sort !== undefined && options.sort.length >= 1) ? options.sort[0].dir : "",
+                            orderbyField: (options.sort !== undefined && options.sort.length >= 1) ? options.sort[0].field : "",
+                        };
+                        return model;
+                    } else if (operation === 'destroy') {
+                        var Account = options.Account;
+                        var model = {
+                            Account: Account,
+                        };
+
+                        return model;
+                    }
+                }
             },
             schema: {
                 //取出資料陣列
                 data: function (d) { return d.rows; },
                 //取出資料總筆數(計算頁數用)
                 total: function (d) { return d.total; },
-                model: {
-                    id: "Index",// 主鍵字段
-                    fields: {
-                        Account: {
-                        },
-                        DepName: {
-                        },
-                        Name: {
-                        },
-                    }
-                }
             },
             pageSize: 10,
             serverPaging: true,//支持分頁功能
@@ -78,7 +396,6 @@
                 pageSizes: [5, 10, 20, 50],
                 refresh: true,
                 buttonCount: 5,
-
             },
         });
 
@@ -90,9 +407,21 @@
                 { field: "Account", title: "帳號" },
                 { field: "DepName", title: "所屬部門" },
                 { field: "Name", title: "姓名" },
-                { command: ["edit", "destroy"], title: "&nbsp;", width: "160px" }
+
+                // 其他列设置
+                {
+                    command: [
+                        { name: "custom", text: "編輯", click: OnEditClick, iconClass: "k-icon k-i-copy" },
+                        { name: "delete", text: "刪除", click: OnDeleteClick, iconClass: "k-icon k-i-close" },
+                    ]
+                }
             ],
-            sortable: true,
+            selectable: "row",
+            //sortable: true,// 所有欄位都要排序
+            sortable: { // 指定欄位排序
+                mode: "single",
+                allowUnsort: false
+            },
             //pageable: true,
             pageable: {
                 pageSize: 10,
@@ -104,41 +433,317 @@
                 info: true,        //是否顯示分頁信息
             },
             resizable: true,//大小是否可調，默認為false
-            //filterable: true,
+            filterable: true,
             toolbar: ["create"],
-            editable: {
-                mode: "popup", //使用Popup的模式編輯資料
-                update: true, // 若設定為True,當按下Update才server資料
-            },
             edit: function (e) {
                 //編輯事件觸發時，可以隱藏某些欄位
-                //https://docs.telerik.com/kendo-ui/api/javascript/ui/grid/events/edit
-                if (!e.model.isNew()) {
-                    // 編輯模式
-                } else {
-                    // 新增模式
-                }
-
-                var editWindow = e.container.data("kendoWindow");
-                // editWindow.unbind("close");
-                editWindow.bind("close", onWindowEditClose);
             },
             save: function (e) {
                 // 新增事件
-
-                var editWindow = e.container.data("kendoWindow");
-                // editWindow.unbind("close");
-                editWindow.bind("close", onWindowEditClose);
-            }
+            },
+            dataBound: function (e) {
+                // AJAX 資料綁定完成後觸發
+            },
+            change: function (e) {
+                var selectedRows = this.select(); // 获取用户选择的行
+                var dataItem = this.dataItem(selectedRows[0]); // 获取选择行的数据项
+                console.log(dataItem);
+            },
         });
 
-        $('#btnQuery').click(function () {
-            QueryGrid(formName);
+        // 創建視窗
+        function createWindow() {
+            // https://stackoverflow.com/questions/59258838/passing-data-to-kendo-window-on-a-button-click-of-kendo-grid
+            $("#edit-confirm").kendoWindow({
+                title: "Add/Edit Document Type Setting", // 標題
+                modal: true,
+                width: 800, // 寬度
+                visible: false, // 初始时隐藏
+                minHeight: 350,
+                actions: ["Close"],  // 显示关闭按钮
+                animation: {
+                    open: {
+                        duration: 1000
+                    },
+                },
+                close: function () {
+                    // close：關閉彈窗時觸發的事件
 
+                    // reset 驗證
+                    validator.reset();
+                },
+                open: function () {// open：打開彈窗觸發的事件
+                    // https://stackoverflow.com/questions/32509961/how-to-center-a-kendo-window
+                    this.center();
+                },
+                deactivate: function (e) {
+                    // deactivate：彈窗關閉結束後觸發的事件
+                },
+            });
+        }
+
+        // 创建窗口
+        createWindow();
+
+        // 編輯按鈕
+        function OnEditClick(e) {
+            // 取得選中的那一列
+            var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+            console.log(dataItem.id); // 访问数据项的 ID 或其他属性
+            // 执行自定义操作
+
+            // 你可以在这里调用函数来打开窗口
+            openWindow(dataItem);
+        };
+
+        // 刪除按鈕
+        function OnDeleteClick(e) {
+            // 取得選中的那一列
+            var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+            console.log(dataItem); // 访问数据项的 ID 或其他属性
+
+            if (confirm('確定要刪除這筆資料嗎?')) {
+                if (!dataItem.Account) {
+                    alert('資料錯誤!');
+                    return false;
+                }
+
+                $.ajax({
+                    url: "/Home/Delete",
+                    type: 'POST',
+                    data: { Account: dataItem.Account },
+                    success: function (data) {
+                        alert(data.msg);
+                        if (data.status) {
+                            // 重整 refresh current UI
+                            $('#dvGrid').data('kendoGrid').dataSource.read();
+                        }
+                    }
+                    , error: function (ex) {
+                        console.log(ex);
+                        alert("Failed to retrieve states : " + ex);
+                    },
+                });
+            }
+        }
+
+        // 按下新增按鈕
+        $('.k-grid-add').click(function () {
+            // 创建窗口
+            createWindow();
+            openWindow(null);
+        });
+
+        // 定义打开窗口的函数
+        // https://blog.csdn.net/sinat_36497286/article/details/81708807
+        function openWindow(data) {
+            // 在这个函数中打开 Kendo 窗口或模态对话框
+            // 使用 Kendo UI 的 Window 组件或其他方式来实现
+            $.ajax({
+                type: "POST",
+                url: '/Home/GetData',
+                dataType: "json",
+                data: {
+                    Account: data !== null ? data.Account : '',
+                },
+                success: function (data) {
+                    console.log(data);
+
+                    // 將後端返回的數據綁定到 Window 元素中
+                    if (data.ID > 0) {
+
+                        TitleBtn = '修改';
+                        $('#onOK').text('更新');
+
+                        // 當筆資料id
+                        //$('#DeptID').val(data.DeptID);
+
+                        // 所屬部門
+                        $('#kd-ddlDepCode').data("kendoDropDownList").value(data.Code);
+                        // 帳號
+                        $('#Name').val(data.Name);
+                        // 帳號名稱-不可修改
+                        $('#Account').val(data.Account);
+                        $("#Account").prop('disabled', true); // 帳號不可修改
+                        // 代碼
+                        $("#Code").val(data.Code);
+                        // 名稱
+                        $("#DepName").val(data.DepName);
+                        // 到職日
+                        $("#ArrivalDate").val(data.Arrival);
+                        // 職稱
+                        $("#Title").val(data.Title);
+
+                        // 狀態
+                        if (data.Status === 1) {
+                            $("input[name='Status'][value='1']").prop('checked', true);
+                        } else {
+                            $("input[name='Status'][value='0']").prop('checked', true);
+                        }
+                        
+                        TitleBtn = '修改';
+                        $('#onOK').text('更新');
+                    } else {
+                        // 新增-清空所有欄位
+
+                        TitleBtn = '新增';
+                        $('#onOK').text('新增');
+
+                        // 當筆資料id
+                        //$('#DeptID').val('');
+
+                        // 帳號
+                        $('#Name').val('');
+                        // 帳號名稱
+                        $('#Account').val('');
+                        $("#Account").prop('disabled', false);
+                        // 代碼
+                        $("#Code").val('');
+                        // 名稱
+                        $("#DepName").val('');
+                        // 職稱
+                        $("#Title").val('');
+
+                        // 狀態預設為在職
+                        $("input[name='Status'][value='1']").prop('checked', true);
+                        $("input[name='Status'][value='0']").prop('checked', false);
+
+                        TitleBtn = '新增';
+                        $('#onOK').text('新增');
+                    }
+
+                    //TitleBtn
+                    $("#edit-confirm").data("kendoWindow").setOptions({
+                        title: TitleBtn
+                    });
+
+                    // 顯示 Window
+                    $("#edit-confirm").data("kendoWindow").open();
+                },
+                error: function (ex) {
+                    console.log(ex);
+                    alert("Failed to retrieve states : " + ex);
+                },
+            });
+        }
+
+        // 新增/修改 按鈕
+        $('#onOK').click(function (e) {
+            var url = '';
+            var model = getUpData();
+            console.log(model);
+
+            if (e.currentTarget.textContent === '新增') {
+                url = '/Home/Create';
+            } else if (e.currentTarget.textContent === '更新') {
+                url = '/Home/Update';
+            }
+
+            if (validator.validate(e)) {
+                $.ajax({
+                    type: "POST",
+                    url: url,
+                    dataType: "json",
+                    data: model,
+                    success: function (data) {
+                        alert(data.msg);
+                        if (data.status) {
+                            // 成功就將視窗關掉
+                            $("#edit-confirm").data("kendoWindow").close();
+                            // 重整 refresh current UI
+                            $('#dvGrid').data('kendoGrid').dataSource.read();
+                        }
+                    },
+                    error: function (ex) {
+                        console.log(ex);
+                        alert("Failed to retrieve states : " + ex);
+                    },
+                });
+            } else {
+                alert('驗證失敗');
+            };
+        });
+
+        // 取消 按鈕
+        $('#onCancel').click(function (e) {
+            // 關閉視窗
+            $("#edit-confirm").data("kendoWindow").close();
+        });
+
+        // 所屬部門選單
+        function depDropDownEditor(container, options) {
+            $('<input id="Dep" name="Dep" data-bind="value:' + options.field + '" required=""/>')
+                .appendTo(container)
+                .kendoDropDownList({
+                    autoBind: true,
+                    dataTextField: "name",
+                    dataValueField: "Code",
+                    dataSource: ddlDepSource,
+                });
+        }
+
+
+        // 部門下拉式選單初始化
+        // https://www.twblogs.net/a/5b8258ea2b71772b883043e3
+        // https://www.cnblogs.com/lindacai/p/8310643.html
+        function initDDL() {
+            $("#kd-place-chooser").kendoDropDownList({                
+                optionLabel: '全部',
+                dataTextField: "Name",
+                dataValueField: "Code",
+                dataSource: ddlDepSource // dataSource
+            });
+        }
+
+        $('#btnQuery').click(function () {
             //要求資料來源重新讀取(並指定切至第一頁)
             dataSrc.read({ page: 1, skip: 0 });
         });
     });
+
+    // 新增/修改 的 model
+    function getUpData() {
+        var Account = $('#Account').val();
+        var Code = $("#kd-ddlDepCode").val(); // 部門
+        var Name = $('#Name').val();
+        var Arrival = $('#ArrivalDate').val();
+        var Dependent = $('#Dependent').val();
+        var Title = $('#Title').val();
+        var City = $('#kd-ddlCity').val();
+        var Area = $('#kd-ddlArea').val();
+
+        var checks = $("input[type='checkbox']:checked");
+        var Commuting = ';';
+
+        for (var i = 1; i <= checks.length; i++) {
+
+            var value = CommutingList.filter((p) => {
+                return p.value == $(checks[i - 1]).val();
+            });
+
+            Commuting += value[0].value + ';';
+        };
+
+        var Status = $('[name="Status"]:checked').val();
+        var Mail = $('#Mail').val();
+
+        var model = {
+            Account: Account,
+            Code: Code,
+            Name: Name,
+            Arrival: Arrival,
+            Dependent: Dependent,
+            Title: Title,
+            City: City,
+            Area: Area,
+            Commuting: Commuting,
+            Status: Status,
+            Mail: Mail,
+        };
+
+        console.log('return model=' + JSON.stringify(model));
+        return model;
+    }
 
     var onWindowEditClose = function (e) {
         if (preventCloseOnSave) {
@@ -146,5 +751,15 @@
             preventCloseOnSave = false;
         }
     };
+
+     function IsEmail(email) {
+        //var regex = /^([a-zA-Z0-9_\.\-\+])+\(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+        //if (!regex.test(email)) {
+        //    return false;
+        //} else {
+        //    return true;
+        //}
+         return true;
+    }
 
 </script>

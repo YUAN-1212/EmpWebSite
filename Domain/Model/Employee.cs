@@ -33,9 +33,20 @@ namespace Domain.Model
         public int DeptID { get; set; }
 
         /// <summary>
+        /// 職稱
+        /// </summary>
+        public string Title { get; set; }
+
+        /// <summary>
         /// 到職日
         /// </summary>
         public DateTime Arrival { get; set; }
+
+        /// <summary>
+        /// 狀態
+        /// 1:在職; 0:離職
+        /// </summary>
+        public int Status { get; set; }
 
         /// <summary>
         /// 新增時間

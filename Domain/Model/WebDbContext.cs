@@ -44,6 +44,11 @@ namespace Domain
         /// 員工
         /// </summary>
         public DbSet<Employee> Employees { get; set; }
+
+        /// <summary>
+        /// 郵遞區號
+        /// </summary>
+        public DbSet<ZipCode> ZipCodes { get; set; }
         #endregion
     }
 }

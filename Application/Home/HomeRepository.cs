@@ -31,49 +31,135 @@ namespace Application.Home
         }
 
         /// <summary>
+        /// 取得 部門下拉選單
+        /// 查詢/新增頁面 - 全部顯示
+        /// 修改 - 顯示其他系列的部門+自己的父層級:最終結果(拿所有部門剃除子節點)
+        /// </summary>
+        /// <returns></returns>
+        public List<Dept> GetDept(int? DeptID)
+        {
+            try
+            {
+                var queryData = new List<Dept>();
+                if (DeptID == 0 || DeptID == null)
+                {
+                    queryData = db.Depts.ToList();
+                }
+                else
+                {
+                    // 顯示其他系列的部門+自己的父層級:最終結果(拿所有部門剃除子節點)
+
+                    // 該部門的子節點，等等要剃除的
+                    List<Dept> hierarchy2 = FindChildDepartments(db.Depts.ToList(), DeptID);
+
+                    foreach (var dept in db.Depts.ToList())
+                    {
+                        if (hierarchy2.Where(x => x.ID == dept.ID).Any())
+                        {
+                            // do nothing，剔除的子部門
+                        }
+                        else if (dept.ID == DeptID)
+                        {
+                            // 還要把自己的部門剃除
+                        }
+                        else
+                        {
+                            queryData.Add(dept);
+                        }
+                    }
+                }
+
+                return queryData;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("取得部門下拉式選單時發生錯誤!!" + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 迭代函数，查找指定部门名称的所有子部门
+        /// </summary>
+        /// <returns></returns>
+        static List<Dept> FindChildDepartments(List<Dept> depts, int? DeptID)
+        {
+            List<Dept> parents = new List<Dept>();
+            var par = depts.Where(x => x.ParentID == DeptID).FirstOrDefault();
+
+            while (par != null)
+            {
+                parents.Add(par);
+                if (par.ParentID.HasValue)
+                {
+                    par = depts.FirstOrDefault(d => d.ParentID == par.ID);
+                }
+                else
+                {
+                    par = null;
+                }
+            }
+
+            return parents;
+        }
+
+        /// <summary>
         /// 查詢
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
         public List<QueryResult> queryData(QueryModel model)
         {
-            var aa = db.Depts.ToList();
-            var bb = db.Employees.ToList();
-
-            var temp = (from a in db.Depts
-                        join b in db.Employees on a.ID equals b.DeptID
-                        select new
-                        {
-                            Index = b.ID,
-                            b.Account,
-                            b.Name,
-                            a.Code,
-                            DepName = a.Name,
-                            //b.City,
-                        }
-                      );
-
-            if (!string.IsNullOrWhiteSpace(model.Name))
+            try
             {
-                temp = temp.Where(t => t.Name.Contains(model.Name) || t.Account.Contains(model.Name));
+                //var aa = db.Depts.ToList();
+                //var bb = db.Employees.ToList();
+
+                var temp = (from a in db.Depts
+                            join b in db.Employees on a.ID equals b.DeptID
+                            select new
+                            {
+                                Index = b.ID,
+                                b.Account,
+                                b.DeptID,
+                                b.Name,
+                                DepCode = a.Code,
+                                DepName = a.Name,
+                                b.Arrival,
+                                b.Title,
+                                b.Status,
+                                //b.City,
+                            }
+                          );
+
+                if (!string.IsNullOrWhiteSpace(model.Name))
+                {
+                    temp = temp.Where(t => t.Name.Contains(model.Name) || t.Account.Contains(model.Name));
+                }
+
+                if (!string.IsNullOrWhiteSpace(model.dept))
+                {
+                    temp = temp.Where(t => t.DepCode == model.dept);
+                }
+
+                var data = temp.Select(p => new QueryResult()
+                {
+                    Index = p.Index,
+                    Account = p.Account,
+                    DeptID = p.DeptID,
+                    Name = p.Name,
+                    DepCode = p.DepCode,
+                    DepName = p.DepName,
+                    //Arrival = p.Arrival.ToString(), //.ToString("yyyy-MM-dd")
+                    Title = p.Title,
+                    Status = p.Status,
+                });
+
+                return data.ToList();
             }
-
-            if (!string.IsNullOrWhiteSpace(model.dept))
+            catch(Exception ex)
             {
-                temp = temp.Where(t => t.Code == model.dept);
-            }
-
-            var data = temp.Select(p => new QueryResult()
-            {
-                Index = p.Index,
-                Account = p.Account,
-                Name = p.Name,
-                //Code = p.Code,
-                DepName = p.DepName,
-                //City = p.City,
-            });
-
-            return data.ToList();
+                throw new Exception("查詢資料時發生錯誤!!" + ex.Message);
+            }            
         }
 
         /// <summary>
@@ -82,77 +168,84 @@ namespace Application.Home
         /// <param name="Account"></param>
         /// <returns></returns>
 
-        public EditData getDate(string Account)
+        public EditData getData(string Account)
         {
             var data = new EditData();
 
-            var query = (from a in DeptData
-                         join b in EmployeeData on a.ID equals b.DeptID
-                         where b.Account == Account
-                         select new
-                         {
-                             b.Account,
-                             b.Name, //人員名稱
-                             a.Code,
-                             DepName = a.Name, //部門名稱
-                             b.Arrival,
-                             //b.Dependent,
-                             //b.Title,
-                             //CityALL = b.City,//縣市全名
-                             //Commuting = b.Commuting,
-                             //b.Status,
-                             //b.Mail,
-                             // b.City, // 取得縣市
-                             //Area = b.City, //取得區域
-                         });
+            try
+            {
+                var query = (from a in DeptData
+                             join b in EmployeeData on a.ID equals b.ID
+                             where b.Account == Account
+                             select new
+                             {
+                                 b.ID,
+                                 b.Account,
+                                 b.Name, //人員名稱
+                                 a.Code,
+                                 DepName = a.Name, //部門名稱
+                                 b.Arrival,
+                                 b.Title,
+                                 //CityALL = b.City,//縣市全名
+                                 //Commuting = b.Commuting,
+                                 b.Status,
+                                 //b.Mail,
+                                 // b.City, // 取得縣市
+                                 //Area = b.City, //取得區域
+                             });
 
-            data = query
-                   .AsEnumerable()
-                   .Select(p => new EditData()
-                   {
-                       Account = p.Account,
-                       Name = p.Name, //人員名稱
-                       DepCode = p.Code,
-                       DepName = p.Name, //部門名稱
-                       Arrival = p.Arrival.ToString("yyyy-MM-dd"),
-                       //Dependent = p.Dependent,
-                       //Title = p.Title,
+                data = query
+                       .AsEnumerable()
+                       .Select(p => new EditData()
+                       {
+                           ID = p.ID > 0 ? p.ID : 0,
+                           Account = p.Account,
+                           Name = p.Name, //人員名稱
+                           DepCode = p.Code,
+                           DepName = p.Name, //部門名稱
+                           Arrival = p.Arrival.ToString("yyyy-MM-dd"),
+                           Title = p.Title,
                        //CityALL = p.City,//縣市全名
                        //Commuting = p.Commuting,
-                       //Status = p.Status == true ? 1 : 0,
+                           Status = p.Status,
                        //Mail = p.Mail,
                        //City = p.City.Split('_')[0], // 取得縣市
                        //Area = p.City.Split('_')[1], //取得區域
                    })
-                   .FirstOrDefault();
+                       .FirstOrDefault();
 
-            //var aa = db.ZipCodes.Where(p => p.City == data.City && p.Area == data.Area).Select(p => p.NO).FirstOrDefault();
-            //data.CityALLNo = aa;
+                //var aa = db.ZipCodes.Where(p => p.City == data.City && p.Area == data.Area).Select(p => p.NO).FirstOrDefault();
+                //data.CityALLNo = aa;
 
-            //var bb = GetCitySelect().Where(p => p.text == data.City).Select(p => p.value).FirstOrDefault();
-            //data.CityNo = Convert.ToInt32(bb);
+                //var bb = GetCitySelect().Where(p => p.text == data.City).Select(p => p.value).FirstOrDefault();
+                //data.CityNo = Convert.ToInt32(bb);
 
-            for (int i = 0; i < data.Commuting.Split(';').Length; i++)
-            {
-                if (data.Commuting.Split(';')[i] == "1")
-                {
-                    data.checkbox1 = true;
-                }
-                else if (data.Commuting.Split(';')[i] == "2")
-                {
-                    data.checkbox2 = true;
-                }
-                else if (data.Commuting.Split(';')[i] == "3")
-                {
-                    data.checkbox3 = true;
-                }
-                else if (data.Commuting.Split(';')[i] == "4")
-                {
-                    data.checkbox4 = true;
-                }
+                //for (int i = 0; i < data.Commuting.Split(';').Length; i++)
+                //{
+                //    if (data.Commuting.Split(';')[i] == "1")
+                //    {
+                //        data.checkbox1 = true;
+                //    }
+                //    else if (data.Commuting.Split(';')[i] == "2")
+                //    {
+                //        data.checkbox2 = true;
+                //    }
+                //    else if (data.Commuting.Split(';')[i] == "3")
+                //    {
+                //        data.checkbox3 = true;
+                //    }
+                //    else if (data.Commuting.Split(';')[i] == "4")
+                //    {
+                //        data.checkbox4 = true;
+                //    }
+                //}
+
+                return data;
             }
-
-            return data;
+            catch(Exception ex)
+            {
+                throw new Exception("查詢資料時發生錯誤!!" + ex.Message);
+            }
         }
 
         /// <summary>
@@ -196,14 +289,15 @@ namespace Application.Home
                         Account = model.Account,
                         DeptID = deptID,
                         Name = model.Name,
-                        //Title = model.Title,
+                        Title = model.Title,
                         Arrival = Convert.ToDateTime(model.Arrival),
                         //Dependent = model.Dependent,
                         //Commuting = model.Commuting,
                         //City = model.City + "_" + model.Area,
                         //Mail = model.Mail,
-                        //Status = model.Status == 1 ? true : false,
-                        //Modified = DateTime.Now,
+                        Status = model.Status,
+                        AddDate = DateTime.Now,
+                        UpdateDate = DateTime.Now,
                     };
 
                     db.Employees.Add(employee);
@@ -227,14 +321,14 @@ namespace Application.Home
                     //employee.Account = model.Account;//帳號不可修改
                     employee.DeptID = deptID;
                     employee.Name = model.Name;
-                    //employee.Title = model.Title;
+                    employee.Title = model.Title;
                     employee.Arrival = Convert.ToDateTime(model.Arrival);
                     //employee.Dependent = model.Dependent;
                     //employee.Commuting = model.Commuting;
                     //employee.City = model.City + "_" + model.Area;
                     //employee.Mail = model.Mail;
-                    //employee.Status = model.Status == 1 ? true : false;
-                    //employee.Modified = DateTime.Now;
+                    employee.Status = model.Status;
+                    employee.UpdateDate = DateTime.Now;
                     db.Entry(employee).State = EntityState.Modified;
                     #endregion
                 }
@@ -267,10 +361,10 @@ namespace Application.Home
                     throw new Exception("系統找不到指定資料。");
                 }
 
-                //if (employee.Status)
-                //{
-                //    throw new Exception("人員的狀態為在職中，不可刪除");
-                //}
+                if (employee.Status == 1)
+                {
+                    throw new Exception("人員的狀態為在職中，不可刪除");
+                }
 
                 db.Employees.Remove(employee);
 

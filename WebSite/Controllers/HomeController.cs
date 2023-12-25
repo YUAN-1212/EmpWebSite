@@ -78,5 +78,42 @@ namespace WebSite.Controllers
             };
             return Json(jsonData, JsonRequestBehavior.AllowGet);
         }
+
+        /// <summary>
+        /// 取得單筆資料
+        /// </summary>
+        /// <param name="DeptID"></param>
+        /// <returns></returns>
+        public JsonResult GetData(string Account)
+        {
+            try
+            {
+                var data = _IHomeRepo.getData(Account);
+
+                return Json(data, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(null, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        /// <summary>
+        /// 取得部門
+        /// 查詢/新增頁面 - 全部顯示
+        /// 修改 - 顯示其他系列的部門+自己的父層級:最終結果(拿所有部門剃除子節點)
+        /// </summary>
+        public JsonResult GetDeptList(int? DeptID)
+        {
+            try
+            {
+                var queryData = _IHomeRepo.GetDept(DeptID);
+                return Json(queryData, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(ex.Message);
+            }
+        }
     }
 }

@@ -66,6 +66,7 @@
     <Compile Include="Model\Dept.cs" />
     <Compile Include="Model\Employee.cs" />
     <Compile Include="Model\WebDbContext.cs" />
+    <Compile Include="Model\ZipCode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />

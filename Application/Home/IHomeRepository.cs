@@ -26,6 +26,14 @@ namespace Application.Home
         //IQueryable<ZipCode> ZipCodeData { get; }
 
         /// <summary>
+        /// 部門下拉選單
+        /// 查詢/新增頁面 - 全部顯示
+        /// 修改 - 顯示其他系列的部門+自己的父層級:最終結果(拿所有部門剃除子節點)
+        /// </summary>
+        /// <returns></returns>
+        List<Dept> GetDept(int? DeptID);
+
+        /// <summary>
         /// 編輯用-縣下拉選單
         /// </summary>
         /// <returns></returns>
@@ -39,7 +47,7 @@ namespace Application.Home
         /// </summary>
         /// <param name="Account"></param>
         /// <returns></returns>
-        EditData getDate(string Account);
+        EditData getData(string Account);
 
         /// <summary>
         /// 新增/修改 資料

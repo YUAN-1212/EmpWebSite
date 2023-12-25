@@ -27,15 +27,114 @@ namespace Application.Home.Dto
     /// </summary>
     public class QueryResult
     {
+        /// <summary>
+        /// 項次
+        /// </summary>
         public int Index { get; set; }
 
+        /// <summary>
+        /// 帳號
+        /// </summary>
         public string Account { get; set; }
 
+        /// <summary>
+        /// 部門ID
+        /// </summary>
+        public int DeptID { get; set; }
+
+        /// <summary>
+        /// 部門英文代碼
+        /// </summary>
+        public string DepCode { get; set; }
+
+        /// <summary>
+        /// 所屬部門
+        /// </summary>
         public string DepName { get; set; }
 
+        /// <summary>
+        /// 中文名字
+        /// </summary>
         public string Name { get; set; }
 
+        /// <summary>
+        /// 到職日
+        /// </summary>
+        public string Arrival { get; set; }
+
+        /// <summary>
+        /// 職稱
+        /// </summary>
+        public string Title { get; set; }
+
+        /// <summary>
+        /// 狀態
+        /// 1:在職; 0:離職
+        /// </summary>
+        public int Status { get; set; }
+
         public string City { get; set; }
+    }
+
+    /// <summary>
+    /// 單筆Dto
+    /// </summary>
+    public class GetDataResult
+    {
+        /// <summary>
+        /// 帳號
+        /// </summary>
+        public string Account { get; set; }
+
+        /// <summary>
+        /// 部門ID
+        /// </summary>
+        public int? DeptID { get; set; }
+
+        /// <summary>
+        /// 英文代碼
+        /// </summary>
+        public string Code { get; set; }
+
+        /// <summary>
+        /// 部門中文名稱
+        /// </summary>
+        public string DepName { get; set; }
+
+        /// <summary>
+        /// 人員姓名
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// 上層部門ID
+        /// </summary>
+        public int? Level1ID { get; set; }
+
+        /// <summary>
+        /// 上層部門英文代碼
+        /// </summary>
+        public string Level1Code { get; set; }
+
+        /// <summary>
+        /// 上層部門中文名稱
+        /// </summary>
+        public string Level1Name { get; set; }
+
+        /// <summary>
+        /// 主管帳號
+        /// </summary>
+        public string Manager { get; set; }
+
+        /// <summary>
+        /// 主管名字
+        /// </summary>
+        public string ManagerName { get; set; }
+
+        /// <summary>
+        /// 第幾層
+        /// </summary>
+        public int Level { get; set; }
     }
 
     /// <summary>
@@ -77,6 +176,12 @@ namespace Application.Home.Dto
         /// 通勤方式否為大眾運輸
         /// </summary>
         public bool checkbox4 { get; set; }
+
+        /// <summary>
+        /// 人員id
+        /// Employee.ID
+        /// </summary>
+        public int? ID { get; set; }
 
         /// <summary>
         /// 部門代號
