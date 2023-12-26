@@ -10,7 +10,7 @@ namespace Application.Home.Dto
     /// <summary>
     /// 查詢 Dto
     /// </summary>
-    public class QueryModel
+    public class QueryModel : QueryDto
     {
         /// <summary>
         /// 部門-下拉式選單
@@ -186,7 +186,7 @@ namespace Application.Home.Dto
         /// <summary>
         /// 部門代號
         /// </summary>
-        public string DepCode { get; set; }
+        public string Code { get; set; }
 
         /// <summary>
         /// 部門名稱

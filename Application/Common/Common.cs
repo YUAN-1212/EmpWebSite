@@ -16,5 +16,17 @@ namespace Application
             Match match = regex.Match(email);
             return match.Success;
         }
+
+        /// <summary>
+        /// https://blog.uwinfo.com.tw/auth/article/reiko/378
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="property"></param>
+        /// <returns></returns>
+        public static object GetPropertyValue(object obj, string property)
+        {
+            System.Reflection.PropertyInfo propertyInfo = obj.GetType().GetProperty(property);
+            return propertyInfo.GetValue(obj, null);
+        }
     }
 }

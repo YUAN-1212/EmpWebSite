@@ -116,6 +116,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\Common.cs" />
+    <Compile Include="Common\Dto.cs" />
     <Compile Include="Common\ExcelHelper.cs" />
     <Compile Include="Home\Dto\HomeDto.cs" />
     <Compile Include="Home\HomeRepository.cs" />

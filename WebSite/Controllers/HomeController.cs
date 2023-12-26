@@ -59,22 +59,21 @@ namespace WebSite.Controllers
         ///  <param name="page">jqGrid丟進來的參數</param>
         ///  https://www.techdoubts.net/2017/05/full-integration-dynamic-jqgrid-asp-net-mvc.html
         /// <returns></returns>
-        public JsonResult Query(QueryModel model, int page)
+        public JsonResult Query(QueryModel model)
         {
             var queryData = _IHomeRepo.queryData(model);
             // var aa = JsonConvert.SerializeObject(queryData);
 
-            int pageSize = 10;
-            int pageNum = page;
+            int pageSize = model.page;
+            int pageNum = model.page;
             int totalRecords = queryData.Count;
             int totalPages = (int)Math.Ceiling((float)totalRecords / (float)pageSize);
 
             var jsonData = new
             {
-                total = totalPages,
+                total = totalRecords, // total:顯示總筆數
                 page = pageNum,
-                records = totalRecords,
-                rows = queryData.Skip((pageNum - 1) * pageSize).Take(pageSize)
+                rows = queryData.Skip((pageNum - 1) * model.take).Take(model.take)
             };
             return Json(jsonData, JsonRequestBehavior.AllowGet);
         }
@@ -95,6 +94,80 @@ namespace WebSite.Controllers
             catch (Exception ex)
             {
                 return Json(null, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        /// <summary>
+        /// 新增 資料        
+        /// </summary>
+        /// <returns></returns>
+        public JsonResult Create(EditData model, string name)
+        {
+            try
+            {
+                var isok = _IHomeRepo.update(model, 1);
+
+                if (isok)
+                {
+                    return Json(new { status = true, msg = "新增資料完成" }, JsonRequestBehavior.AllowGet);
+                }
+                else
+                {
+                    return Json(new { status = false, msg = "新增資料失敗" }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { status = false, msg = "新增資料有誤:" + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        /// <summary>
+        /// 修改 資料        
+        /// </summary>
+        /// <returns></returns>
+        public JsonResult Update(EditData model, string name)
+        {
+            try
+            {
+                var isok = _IHomeRepo.update(model, 2);
+                if (isok)
+                {
+                    return Json(new { status = true, msg = "修改資料完成" }, JsonRequestBehavior.AllowGet);
+                }
+                else
+                {
+                    return Json(new { status = false, msg = "修改資料失敗" }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { status = false, msg = "修改資料有誤:" + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        /// <summary>
+        /// 刪除 資料        
+        /// </summary>
+        /// <returns></returns>
+        public JsonResult Delete(string Account)
+        {
+            try
+            {
+                var isok = _IHomeRepo.delete(Account);
+
+                if (isok)
+                {
+                    return Json(new { status = true, msg = "刪除資料完成" }, JsonRequestBehavior.AllowGet);
+                }
+                else
+                {
+                    return Json(new { status = false, msg = "刪除資料失敗" }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { status = false, msg = "刪除資料有誤:" + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 

@@ -9,18 +9,6 @@ CREATE TABLE IF NOT EXISTS "Dept" (
 	"UpdateDate"	TEXT NOT NULL,
 	PRIMARY KEY("ID")
 );
-CREATE TABLE IF NOT EXISTS "Employee" (
-	"ID"	INTEGER NOT NULL,
-	"Account"	TEXT NOT NULL,
-	"Name"	TEXT NOT NULL,
-	"DeptID"	INTEGER NOT NULL,
-	"Title"	TEXT,
-	"Arrival"	REAL NOT NULL,
-	"Status"	INTEGER NOT NULL,
-	"AddDate"	TEXT NOT NULL,
-	"UpdateDate"	TEXT NOT NULL,
-	PRIMARY KEY("ID")
-);
 CREATE TABLE IF NOT EXISTS "ZipCode" (
 	"NO"	INTEGER NOT NULL,
 	"Code"	INTEGER,
@@ -28,14 +16,24 @@ CREATE TABLE IF NOT EXISTS "ZipCode" (
 	"Area"	TEXT,
 	PRIMARY KEY("NO")
 );
+CREATE TABLE IF NOT EXISTS "Employee" (
+	"ID"	INTEGER NOT NULL,
+	"Account"	TEXT NOT NULL,
+	"Name"	NUMERIC NOT NULL,
+	"DeptID"	INTEGER NOT NULL,
+	"Title"	TEXT,
+	"Arrival"	REAL NOT NULL,
+	"Mail"	TEXT NOT NULL,
+	"Status"	INTEGER NOT NULL,
+	"AddDate"	TEXT NOT NULL,
+	"UpdateDate"	TEXT NOT NULL,
+	PRIMARY KEY("ID")
+);
 INSERT INTO "Dept" VALUES (1,0,'DB','資料庫管理','Lily','2023-01-01','2023-01-01');
 INSERT INTO "Dept" VALUES (2,0,'AA00','人資部','Mandy','2023-01-01','2023-01-01');
 INSERT INTO "Dept" VALUES (3,0,'CC00','資訊部','Ben','2023-01-01','2023-01-01');
 INSERT INTO "Dept" VALUES (4,1,'BB00','客服部','Jung','2023-01-01','2023-01-01');
 INSERT INTO "Dept" VALUES (5,2,'DD00','企劃部','Anne','2023-01-01','2023-01-01');
-INSERT INTO "Employee" VALUES (1,'Lily','莉莉',1,NULL,'2023-02-05',1,'2023-02-05','2023-02-05');
-INSERT INTO "Employee" VALUES (2,'Rola','蘿拉',1,NULL,'2018-05-01',1,'2018-05-01','2018-05-01');
-INSERT INTO "Employee" VALUES (3,'Ben','班',3,NULL,'2012-07-10',1,'2012-07-10','2012-07-10');
 INSERT INTO "ZipCode" VALUES (1,100,'台北市','中正區');
 INSERT INTO "ZipCode" VALUES (2,103,'台北市','大同區');
 INSERT INTO "ZipCode" VALUES (3,104,'台北市','中山區');
@@ -89,4 +87,15 @@ INSERT INTO "ZipCode" VALUES (50,249,'新北市','八里區');
 INSERT INTO "ZipCode" VALUES (51,251,'新北市','淡水區');
 INSERT INTO "ZipCode" VALUES (52,252,'新北市','三芝區');
 INSERT INTO "ZipCode" VALUES (53,253,'新北市','石門區');
+INSERT INTO "Employee" VALUES (1,'Lily','莉莉',2,'工程師','2023-02-05 00:00:00','lily1@yahoo.com.tw',1,'2023-02-05 00:00:00','2023-12-26 10:35:04.9718142');
+INSERT INTO "Employee" VALUES (2,'Rola','蘿拉',1,NULL,'2018-05-01','rola55@hotmail.com.tw',1,'2018-05-01','2018-05-01');
+INSERT INTO "Employee" VALUES (3,'Ben','班',3,NULL,'2012-07-10','ben01@yahoo.com.tw',1,'2012-07-10','2012-07-10');
+INSERT INTO "Employee" VALUES (4,'Leo','里昂',4,'客服經理','2019-10-14','Leo951@hotmail.com',1,'2019-10-14','2019-10-14');
+INSERT INTO "Employee" VALUES (5,'Hawk','豪克',3,'專員','2020-07-23','HawkII@hitmail.com',1,'2020-07-23','2020-07-23');
+INSERT INTO "Employee" VALUES (6,'Eddie','艾迪',2,'專員','2015-12-05','Eddie777@yahoo.com.tw',1,'2015-12-05','2015-12-05');
+INSERT INTO "Employee" VALUES (7,'Zoe','柔伊',5,'專員','2019-03-01','Zoe1120@yahoo.com.tw',1,'2019-03-01','2019-03-01');
+INSERT INTO "Employee" VALUES (8,'Ada','愛達',5,'專員','2016-09-05','Ada111@yahoo.com.tw',1,'2016-09-05','2016-09-05');
+INSERT INTO "Employee" VALUES (9,'Harry','哈利',5,'專員','2023-01-06','Harry12@yahoo.com.tw',0,'2023-01-06','2023-01-06');
+INSERT INTO "Employee" VALUES (10,'Neal','尼爾',2,NULL,'2023-05-02','Neal222@yahoo.com.tw',1,'2023-05-02','2023-05-02');
+INSERT INTO "Employee" VALUES (11,'Tony','托尼',3,'工程師','2021-06-30','Tony@yahoo.com.tw',0,'2021-06-30','2021-06-30');
 COMMIT;

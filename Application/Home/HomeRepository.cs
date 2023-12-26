@@ -111,6 +111,8 @@ namespace Application.Home
         {
             try
             {
+                string propertyNameForOrdering = ""; // 根據甚麼欄位排序
+
                 //var aa = db.Depts.ToList();
                 //var bb = db.Employees.ToList();
 
@@ -128,8 +130,7 @@ namespace Application.Home
                                 b.Title,
                                 b.Status,
                                 //b.City,
-                            }
-                          );
+                            });
 
                 if (!string.IsNullOrWhiteSpace(model.Name))
                 {
@@ -152,7 +153,20 @@ namespace Application.Home
                     //Arrival = p.Arrival.ToString(), //.ToString("yyyy-MM-dd")
                     Title = p.Title,
                     Status = p.Status,
-                });
+                }).ToList();
+
+                if (!string.IsNullOrWhiteSpace(model.orderby))
+                {
+                    propertyNameForOrdering = model.orderbyField;
+                    if (model.orderby == "asc")
+                    {
+                        data = data.OrderBy(p => Common.GetPropertyValue(p, propertyNameForOrdering)).ToList();
+                    }
+                    else if (model.orderby == "desc")
+                    {
+                        data = data.OrderByDescending(p => Common.GetPropertyValue(p, propertyNameForOrdering)).ToList();
+                    }
+                }
 
                 return data.ToList();
             }
@@ -174,8 +188,13 @@ namespace Application.Home
 
             try
             {
+                if (string.IsNullOrEmpty(Account))
+                {
+                    return data;
+                }
+
                 var query = (from a in DeptData
-                             join b in EmployeeData on a.ID equals b.ID
+                             join b in EmployeeData on a.ID equals b.DeptID
                              where b.Account == Account
                              select new
                              {
@@ -189,10 +208,10 @@ namespace Application.Home
                                  //CityALL = b.City,//縣市全名
                                  //Commuting = b.Commuting,
                                  b.Status,
-                                 //b.Mail,
+                                 b.Mail,
                                  // b.City, // 取得縣市
                                  //Area = b.City, //取得區域
-                             });
+                             });                
 
                 data = query
                        .AsEnumerable()
@@ -201,44 +220,18 @@ namespace Application.Home
                            ID = p.ID > 0 ? p.ID : 0,
                            Account = p.Account,
                            Name = p.Name, //人員名稱
-                           DepCode = p.Code,
+                           Code = p.Code,
                            DepName = p.Name, //部門名稱
                            Arrival = p.Arrival.ToString("yyyy-MM-dd"),
                            Title = p.Title,
                        //CityALL = p.City,//縣市全名
                        //Commuting = p.Commuting,
                            Status = p.Status,
-                       //Mail = p.Mail,
+                           Mail = p.Mail,
                        //City = p.City.Split('_')[0], // 取得縣市
                        //Area = p.City.Split('_')[1], //取得區域
                    })
                        .FirstOrDefault();
-
-                //var aa = db.ZipCodes.Where(p => p.City == data.City && p.Area == data.Area).Select(p => p.NO).FirstOrDefault();
-                //data.CityALLNo = aa;
-
-                //var bb = GetCitySelect().Where(p => p.text == data.City).Select(p => p.value).FirstOrDefault();
-                //data.CityNo = Convert.ToInt32(bb);
-
-                //for (int i = 0; i < data.Commuting.Split(';').Length; i++)
-                //{
-                //    if (data.Commuting.Split(';')[i] == "1")
-                //    {
-                //        data.checkbox1 = true;
-                //    }
-                //    else if (data.Commuting.Split(';')[i] == "2")
-                //    {
-                //        data.checkbox2 = true;
-                //    }
-                //    else if (data.Commuting.Split(';')[i] == "3")
-                //    {
-                //        data.checkbox3 = true;
-                //    }
-                //    else if (data.Commuting.Split(';')[i] == "4")
-                //    {
-                //        data.checkbox4 = true;
-                //    }
-                //}
 
                 return data;
             }
@@ -261,7 +254,7 @@ namespace Application.Home
             try
             {
                 var employee = new Employee();
-                var deptID = db.Depts.Where(p => p.Code == model.DepCode).Select(p => p.ID).FirstOrDefault();
+                var deptID = db.Depts.Where(p => p.Code == model.Code).Select(p => p.ID).FirstOrDefault();
 
                 if (!Common.checkEmail(model.Mail))
                 {
@@ -273,16 +266,16 @@ namespace Application.Home
                 {
                     #region 新增
 
-                    if (EmployeeData.Where(p => p.Name == model.Account).Any())
+                    if (EmployeeData.Where(p => p.Account == model.Account).Any())
                     {
                         // 帳號不可重複
                         throw new Exception("已有相同的帳號!");
                     }
-                    //else if (EmployeeData.Where(p => p.Mail == model.Mail).Any())
-                    //{
-                    //    // 信箱不可重複
-                    //    throw new Exception("已有相同的信箱!");
-                    //}
+                    else if (EmployeeData.Where(p => p.Mail == model.Mail).Any())
+                    {
+                        // 信箱不可重複
+                        throw new Exception("已有相同的信箱!");
+                    }
 
                     employee = new Employee()
                     {
@@ -294,7 +287,7 @@ namespace Application.Home
                         //Dependent = model.Dependent,
                         //Commuting = model.Commuting,
                         //City = model.City + "_" + model.Area,
-                        //Mail = model.Mail,
+                        Mail = model.Mail,
                         Status = model.Status,
                         AddDate = DateTime.Now,
                         UpdateDate = DateTime.Now,
@@ -312,11 +305,11 @@ namespace Application.Home
                     {
                         throw new Exception("系統找不到指定資料。");
                     }
-                    //else if (EmployeeData.Where(p => p.Mail == model.Mail).Count() > 1)
-                    //{
-                    //    // 信箱不可重複
-                    //    throw new Exception("已有相同的信箱!");
-                    //}
+                    else if (EmployeeData.Where(p => p.Mail == model.Mail).Count() > 1)
+                    {
+                        // 信箱不可重複
+                        throw new Exception("已有相同的信箱!");
+                    }
 
                     //employee.Account = model.Account;//帳號不可修改
                     employee.DeptID = deptID;
@@ -326,7 +319,7 @@ namespace Application.Home
                     //employee.Dependent = model.Dependent;
                     //employee.Commuting = model.Commuting;
                     //employee.City = model.City + "_" + model.Area;
-                    //employee.Mail = model.Mail;
+                    employee.Mail = model.Mail;
                     employee.Status = model.Status;
                     employee.UpdateDate = DateTime.Now;
                     db.Entry(employee).State = EntityState.Modified;

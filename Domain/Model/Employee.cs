@@ -49,6 +49,11 @@ namespace Domain.Model
         public int Status { get; set; }
 
         /// <summary>
+        /// 信箱
+        /// </summary>
+        public string Mail { get; set; }
+
+        /// <summary>
         /// 新增時間
         /// </summary>
         public DateTime AddDate { get; set; }

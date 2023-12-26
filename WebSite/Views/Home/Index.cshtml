@@ -18,7 +18,7 @@
     <div style="padding: 10px;">
         關鍵字:
         <input id="tKeyword" />
-        <input type="button" value="查詢" id="bQuery" class="btn btn-success" />
+        <input type="button" value="查詢" id="btnQuery" class="btn btn-success" />
     </div>
 
     <div id="dvGrid">
@@ -59,7 +59,7 @@
                                 <label>帳號</label>
                             </td>
                             <td>
-                                <input type="text" id="Account" placeholder="your name" name="Account" />
+                                <input type="text" id="editAccount" placeholder="your name" name="editAccount" />
                             </td>
                         </tr>
                         <tr>
@@ -70,7 +70,7 @@
                                 <input type="text" id="Title" placeholder="your Title" />
                             </td>
                         </tr>
-                        <tr>
+                        @*<tr>
                             <td width="20%">
                                 <label>戶籍縣市</label>
                             </td>
@@ -80,8 +80,8 @@
                             <td>
                                 <input id="kd-ddlArea" name="kd-ddlArea" style="width: 300px" />
                             </td>
-                        </tr>
-                        <tr>
+                        </tr>*@
+                        @*<tr>
                             <td width="20%">
                                 <label>通勤方式</label>
                             </td>
@@ -93,7 +93,7 @@
                                     大眾運輸 <input type="checkbox" id="checkbox4" name="Commuting" value="4" />
                                 </span>
                             </td>
-                        </tr>
+                        </tr>*@
                         <tr>
                             <td width="20%">
                                 <label>狀態</label>
@@ -390,7 +390,7 @@
             pageSize: 10,
             serverPaging: true,//支持分頁功能
             serverSorting: true,//支持排序功能
-            serveFiltering: true,//支持查詢功能
+            //serveFiltering: true,//支持查詢功能
             //bath:true,//可批量操作
             pageable: {
                 pageSizes: [5, 10, 20, 50],
@@ -404,9 +404,13 @@
             dataSource: dataSrc,//資料來源
             columns: [
                 //"Index",
-                { field: "Account", title: "帳號" },
-                { field: "DepName", title: "所屬部門" },
-                { field: "Name", title: "姓名" },
+                { field: "Account", title: "帳號", sortable: true },
+                {
+                    field: "Code", title: "部門", hidden: true,
+                    editor: depDropDownEditor
+                },
+                { field: "DepName", title: "所屬部門", sortable: false },
+                { field: "Name", title: "姓名", sortable: false },
 
                 // 其他列设置
                 {
@@ -433,8 +437,11 @@
                 info: true,        //是否顯示分頁信息
             },
             resizable: true,//大小是否可調，默認為false
-            filterable: true,
-            toolbar: ["create"],
+            //filterable: true,
+            toolbar: [
+                { name: "create", text: "新增" }
+                //"create" // 原始的
+            ],
             edit: function (e) {
                 //編輯事件觸發時，可以隱藏某些欄位
             },
@@ -541,7 +548,7 @@
             // 使用 Kendo UI 的 Window 组件或其他方式来实现
             $.ajax({
                 type: "POST",
-                url: '/Home/GetData',
+                url: '/Home/GetData',                
                 dataType: "json",
                 data: {
                     Account: data !== null ? data.Account : '',
@@ -550,7 +557,7 @@
                     console.log(data);
 
                     // 將後端返回的數據綁定到 Window 元素中
-                    if (data.ID > 0) {
+                    if (data !== null && data.ID > 0) {
 
                         TitleBtn = '修改';
                         $('#onOK').text('更新');
@@ -563,8 +570,8 @@
                         // 帳號
                         $('#Name').val(data.Name);
                         // 帳號名稱-不可修改
-                        $('#Account').val(data.Account);
-                        $("#Account").prop('disabled', true); // 帳號不可修改
+                        $('#editAccount').val(data.Account);
+                        $("#editAccount").prop('disabled', true); // 帳號不可修改
                         // 代碼
                         $("#Code").val(data.Code);
                         // 名稱
@@ -573,6 +580,8 @@
                         $("#ArrivalDate").val(data.Arrival);
                         // 職稱
                         $("#Title").val(data.Title);
+                        // Email
+                        $("#Mail").val(data.Mail);
 
                         // 狀態
                         if (data.Status === 1) {
@@ -595,14 +604,16 @@
                         // 帳號
                         $('#Name').val('');
                         // 帳號名稱
-                        $('#Account').val('');
-                        $("#Account").prop('disabled', false);
+                        $('#editAccount').val('');
+                        $("#editAccount").prop('disabled', false);
                         // 代碼
                         $("#Code").val('');
                         // 名稱
                         $("#DepName").val('');
                         // 職稱
                         $("#Title").val('');
+                        // Email
+                        $("#Mail").val('');
 
                         // 狀態預設為在職
                         $("input[name='Status'][value='1']").prop('checked', true);
@@ -620,9 +631,9 @@
                     // 顯示 Window
                     $("#edit-confirm").data("kendoWindow").open();
                 },
-                error: function (ex) {
-                    console.log(ex);
-                    alert("Failed to retrieve states : " + ex);
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(XMLHttpRequest.status);
+                    alert(textStatus);
                 },
             });
         }
@@ -703,26 +714,26 @@
 
     // 新增/修改 的 model
     function getUpData() {
-        var Account = $('#Account').val();
+        var Account = $('#editAccount').val();
         var Code = $("#kd-ddlDepCode").val(); // 部門
         var Name = $('#Name').val();
         var Arrival = $('#ArrivalDate').val();
-        var Dependent = $('#Dependent').val();
+        /*var Dependent = $('#Dependent').val();*/
         var Title = $('#Title').val();
-        var City = $('#kd-ddlCity').val();
-        var Area = $('#kd-ddlArea').val();
+        //var City = $('#kd-ddlCity').val();
+        //var Area = $('#kd-ddlArea').val();
 
-        var checks = $("input[type='checkbox']:checked");
+        //var checks = $("input[type='checkbox']:checked");
         var Commuting = ';';
 
-        for (var i = 1; i <= checks.length; i++) {
+        //for (var i = 1; i <= checks.length; i++) {
 
-            var value = CommutingList.filter((p) => {
-                return p.value == $(checks[i - 1]).val();
-            });
+        //    var value = CommutingList.filter((p) => {
+        //        return p.value == $(checks[i - 1]).val();
+        //    });
 
-            Commuting += value[0].value + ';';
-        };
+        //    Commuting += value[0].value + ';';
+        //};
 
         var Status = $('[name="Status"]:checked').val();
         var Mail = $('#Mail').val();
@@ -732,11 +743,11 @@
             Code: Code,
             Name: Name,
             Arrival: Arrival,
-            Dependent: Dependent,
+            //Dependent: Dependent,
             Title: Title,
-            City: City,
-            Area: Area,
-            Commuting: Commuting,
+            //City: City,
+            //Area: Area,
+            //Commuting: Commuting,
             Status: Status,
             Mail: Mail,
         };
